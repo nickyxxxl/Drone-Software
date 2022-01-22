@@ -155,10 +155,10 @@ float mapFloat(float input, float in_min, float in_max, float out_min, float out
 
 void mapInput() {
 
-  target_roll = mapFloat(sbus_data[0], 1000, 2000, -axisSensitivity, axisSensitivity);
-  target_pitch = mapFloat(sbus_data[1], 1000, 2000, -axisSensitivity, axisSensitivity);
-  target_yaw = mapFloat(sbus_data[3], 1000, 2000, -axisSensitivity, axisSensitivity);
-  throttle = mapFloat(sbus_data[2], 1000, 2000, 1000, 1750);
+  target_roll = map(sbus_data[0], 180, 1820, -axisSensitivity, axisSensitivity);
+  target_pitch = map(sbus_data[1], 180, 1820, -axisSensitivity, axisSensitivity);
+  target_yaw = map(sbus_data[3], 180, 1820, -axisSensitivity, axisSensitivity);
+  throttle = map(sbus_data[2], 180, 1820, 1000, 1750);
 }
 
 
