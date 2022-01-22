@@ -4,7 +4,7 @@
 #include <sbus.h>
 
 
-int debugMode {0};
+int debugMode {2};
 
 //Mode 0: No debug
 //Mode 1: Debug gyro
@@ -259,10 +259,8 @@ void loop() {
 
   //Enter debug mode
   if (debugMode > 0) {
-    if (sbus_data[5] <= 1600)debugMode--;
-    if (sbus_data[6] >= 1600)debugMode++;
     debug();
-    delay(1000);
+    delay(100);
   }
 
 
