@@ -236,7 +236,7 @@ void applyMotors() {
 void voltageWarning(){
 
   if(ina219.getBusVoltage_V() <= 6.5 || batteryWarning == true){
-    tone(speaker, 3800);
+    ledcWriteTone(speaker, 3800);
     batteryWarning = true;
   }
   
@@ -266,7 +266,7 @@ Serial.println("tekst in" + String(now));
 
   Serial.println("Initializing current sensor.");
   while(!ina219.begin());
-  pinMode(speaker, OUTPUT);
+  ledcSetup(speaker, 0, 8);
   Serial.println("Finished initializing current sensor");
   
   Serial.println("Initializing servos");
