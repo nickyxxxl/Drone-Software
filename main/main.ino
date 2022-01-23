@@ -4,6 +4,7 @@
 #include <sbus.h>
 
 
+
 int debugMode {2};
 
 //Mode 0: No debug
@@ -231,6 +232,8 @@ void applyMotors() {
 void setup() {
 
   int now = millis();
+  
+Serial.print("tekst in" + String(now));
   Serial.begin(115200);
   Serial.print("Test2!");
   while (!Serial) {}
@@ -250,9 +253,7 @@ void setup() {
   Serial.print("Initializing servos");
   initializeServos();             //Start connection to motors
   Serial.print("Finished initializing servos");
-  Serial.print("Finished setup in: ");
-  Serial.print(millis() - now);
-  Serial.print(" ms");
+  Serial.print("Finished setup in: " + String(millis() - now) + " ms");
 }
 
 void loop() {
@@ -299,64 +300,44 @@ void loop() {
 
 void debug() {
 
-  switch (debugMode) {
+ switch (debugMode) {
 
     //debug gyro
     case 1:
-      Serial.print("GYRO ROLL= ");
-      Serial.print(gyro_roll);
-      Serial.print("          ");
-      Serial.print("GYRO PITCH= ");
-      Serial.print(gyro_pitch);
-      Serial.print("          ");
-      Serial.print("GYRO YAW= ");
-      Serial.print(gyro_yaw);
+      Serial.println("GYRO ROLL= " + String(gyro_roll));
+      Serial.println("GYRO PITCH= " + String(gyro_pitch));
+      Serial.println("GYRO YAW= " + String(gyro_yaw));
       break;
 
     //debug receiver
     case 2:
-      Serial.print("THROTTLE= ");
-      Serial.print(sbus_data[2]);
-      Serial.print("          ");
-      Serial.print("ROLL= ");
-      Serial.print(sbus_data[0]);
-      Serial.print("          ");
-      Serial.print("YAW= ");
-      Serial.print(sbus_data[3]);
-      Serial.print('\n');
-      Serial.print("PITCH= ");
-      Serial.print(sbus_data[1]);
-      Serial.print("          ");
+      Serial.println("THROTTLE= " + String(sbus_data[2]));
+      Serial.println("ROLL= " + String(sbus_data[0]));
+      Serial.println("YAW= " + String(sbus_data[3]));
+      Serial.println("PITCH= " + String(sbus_data[1]));
       Serial.print("ARM= ");
       if (sbus_data[4] >= 1600) {
-        Serial.print("ON");
-      } else Serial.print("OFF");
+        Serial.print("ON" + '\n');
+      } else Serial.print("OFF" + '\n');
       break;
 
     //debug PID output
     case 3:
-      Serial.print("PID ROLL= ");
-      Serial.print(PID_output_roll);
-      Serial.print("PID PITCH= ");
-      Serial.print(PID_output_pitch);
-      Serial.print("PID YAW= ");
-      Serial.print(PID_output_yaw);
+      Serial.print("PID ROLL= " + String(PID_output_roll));
+      Serial.print("PID PITCH= " + String(PID_output_pitch));
+      Serial.print("PID YAW= " + String(PID_output_yaw));
       break;
 
     //display pwm motors
     case 4:
-      Serial.print("Motor 4: ");
-      Serial.print(m4);
+      Serial.print("Motor 4: " + String(m4));
       Serial.print("          ");
-      Serial.print("Motor 2: ");
-      Serial.print(m2);
+      Serial.print("Motor 2: " + String(m2));
       Serial.print('\n');
       Serial.print('\n');
-      Serial.print("Motor 3: ");
-      Serial.print(m3);
+      Serial.print("Motor 3: " + String(m3));
       Serial.print("          ");
-      Serial.print("Motor 1: ");
-      Serial.print(m1);
+      Serial.print("Motor 1: " + String(m1));
       break;
 
     //Spin motors
@@ -366,28 +347,28 @@ void debug() {
       while (millis() <= now + 2000) {
         motor1.writeMicroseconds(1300);
         delay(600);
-      }
+      }motor1.writeMicroseconds(0);
 
       now = millis();
       Serial.print("Now spinning motor 2!");
       while (millis() <= now + 2000) {
         motor2.writeMicroseconds(1300);
         delay(600);
-      }
+      }motor2.writeMicroseconds(0);
 
       now = millis();
       Serial.print("Now spinning motor 3!");
       while (millis() <= now + 2000) {
         motor3.writeMicroseconds(1300);
         delay(600);
-      }
+      }motor3.writeMicroseconds(0);
 
       now = millis();
       Serial.print("Now spinning motor 4!");
       while (millis() <= now + 2000) {
         motor4.writeMicroseconds(1300);
         delay(600);
-      }
+      }motor4.writeMicroseconds(0);
       delay(10000);
       break;
   }
