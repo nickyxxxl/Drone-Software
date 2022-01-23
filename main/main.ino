@@ -16,10 +16,10 @@ int debugMode {2};
 ///////////////////////////User defined/////////////////////////////////////
 
 //Define the pins for each motor
-#define _motor1 39
-#define _motor2 40
-#define _motor3 41
-#define _motor4 42
+#define _motor1 34
+#define _motor2 35
+#define _motor3 32
+#define _motor4 33
 
 //Define pin for sbus rx and tx channel (we only care about rx)
 const int8_t rxpin {16};
