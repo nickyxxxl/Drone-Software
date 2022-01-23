@@ -4,6 +4,7 @@
 #include <sbus.h>
 
 
+
 int debugMode {2};
 
 //Mode 0: No debug
@@ -231,6 +232,8 @@ void applyMotors() {
 void setup() {
 
   int now = millis();
+  
+Serial.print("tekst in" + String(now));
   Serial.begin(115200);
   Serial.print("Test2!");
   while (!Serial) {}
@@ -366,28 +369,28 @@ void debug() {
       while (millis() <= now + 2000) {
         motor1.writeMicroseconds(1300);
         delay(600);
-      }
+      }motor1.writeMicroseconds(0);
 
       now = millis();
       Serial.print("Now spinning motor 2!");
       while (millis() <= now + 2000) {
         motor2.writeMicroseconds(1300);
         delay(600);
-      }
+      }motor2.writeMicroseconds(0);
 
       now = millis();
       Serial.print("Now spinning motor 3!");
       while (millis() <= now + 2000) {
         motor3.writeMicroseconds(1300);
         delay(600);
-      }
+      }motor3.writeMicroseconds(0);
 
       now = millis();
       Serial.print("Now spinning motor 4!");
       while (millis() <= now + 2000) {
         motor4.writeMicroseconds(1300);
         delay(600);
-      }
+      }motor4.writeMicroseconds(0);
       delay(10000);
       break;
   }
