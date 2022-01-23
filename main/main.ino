@@ -302,64 +302,44 @@ void loop() {
 
 void debug() {
 
-  switch (debugMode) {
+ switch (debugMode) {
 
     //debug gyro
     case 1:
-      Serial.print("GYRO ROLL= ");
-      Serial.print(gyro_roll);
-      Serial.print("          ");
-      Serial.print("GYRO PITCH= ");
-      Serial.print(gyro_pitch);
-      Serial.print("          ");
-      Serial.print("GYRO YAW= ");
-      Serial.print(gyro_yaw);
+      Serial.println("GYRO ROLL= " + String(gyro_roll));
+      Serial.println("GYRO PITCH= " + String(gyro_pitch));
+      Serial.println("GYRO YAW= " + String(gyro_yaw));
       break;
 
     //debug receiver
     case 2:
-      Serial.print("THROTTLE= ");
-      Serial.print(sbus_data[2]);
-      Serial.print("          ");
-      Serial.print("ROLL= ");
-      Serial.print(sbus_data[0]);
-      Serial.print("          ");
-      Serial.print("YAW= ");
-      Serial.print(sbus_data[3]);
-      Serial.print('\n');
-      Serial.print("PITCH= ");
-      Serial.print(sbus_data[1]);
-      Serial.print("          ");
+      Serial.println("THROTTLE= " + String(sbus_data[2]));
+      Serial.println("ROLL= " + String(sbus_data[0]));
+      Serial.println("YAW= " + String(sbus_data[3]));
+      Serial.println("PITCH= " + String(sbus_data[1]));
       Serial.print("ARM= ");
       if (sbus_data[4] >= 1600) {
-        Serial.print("ON");
-      } else Serial.print("OFF");
+        Serial.print("ON" + '\n');
+      } else Serial.print("OFF" + '\n');
       break;
 
     //debug PID output
     case 3:
-      Serial.print("PID ROLL= ");
-      Serial.print(PID_output_roll);
-      Serial.print("PID PITCH= ");
-      Serial.print(PID_output_pitch);
-      Serial.print("PID YAW= ");
-      Serial.print(PID_output_yaw);
+      Serial.print("PID ROLL= " + String(PID_output_roll));
+      Serial.print("PID PITCH= " + String(PID_output_pitch));
+      Serial.print("PID YAW= " + String(PID_output_yaw));
       break;
 
     //display pwm motors
     case 4:
-      Serial.print("Motor 4: ");
-      Serial.print(m4);
+      Serial.print("Motor 4: " + String(m4));
       Serial.print("          ");
-      Serial.print("Motor 2: ");
-      Serial.print(m2);
+      Serial.print("Motor 2: " + String(m2));
       Serial.print('\n');
       Serial.print('\n');
-      Serial.print("Motor 3: ");
-      Serial.print(m3);
+      Serial.print("Motor 3: " + String(m3));
       Serial.print("          ");
-      Serial.print("Motor 1: ");
-      Serial.print(m1);
+      Serial.print("Motor 1: " + String(m1));
       break;
 
     //Spin motors
