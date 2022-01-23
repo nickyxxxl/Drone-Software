@@ -2,6 +2,7 @@
 #include <Wire.h>
 #include <ESP32Servo.h>
 #include <sbus.h>
+#include <Adafruit_INA219.h>
 
 
 
@@ -21,6 +22,8 @@ int debugMode {2};
 #define _motor2 35
 #define _motor3 32
 #define _motor4 33
+
+#define speaker 16
 
 //Define pin for sbus rx and tx channel (we only care about rx)
 const int8_t rxpin {16};
@@ -46,8 +49,10 @@ const float kp_yaw {1},
 const float axisSensitivity {100}; //How much degrees/s should max stick be?
 //////////////////////////////////////////////////////////////////////////
 
-//Create Servo object, used to send pwm signal
 MPU6050 mpu6050(Wire);
+Adafruit_INA219 ina219;
+
+//Create Servo object, used to send pwm signal
 Servo motor1;                       //  4 ----- 2
 Servo motor2;                       //   |  ^  |
 Servo motor3;                       //   |     |
@@ -55,6 +60,7 @@ Servo motor4;                       //  3 ----- 1
 
 //Operational variables
 bool failsafe = false;
+bool batteryWarning = false;
 float deltaT {};
 
 float currentTime;
@@ -227,33 +233,46 @@ void applyMotors() {
   motor4.writeMicroseconds(m4);
 }
 
+void voltageWarning(){
+
+  if(ina219.getBusVoltage_V() <= 6.5 || batteryWarning == true){
+    tone(speaker, 3800);
+    batteryWarning = true;
+  }
+  
+}
 
 
 void setup() {
 
   int now = millis();
   
-Serial.print("tekst in" + String(now));
+Serial.println("tekst in" + String(now));
   Serial.begin(115200);
-  Serial.print("Test2!");
+  Serial.println("Test2!");
   while (!Serial) {}
-  Serial.print("Test1!");
+  Serial.println("Test1!");
 
-  Serial.print("Starting sbus connection.");
+  Serial.println("Starting sbus connection.");
   sbus_rx.Begin(rxpin, txpin);    //Begin Sbus communication
 
-  Serial.print("Starting gyro connection.");
+  Serial.println("Starting gyro connection.");
   Wire.begin();
   mpu6050.begin();                //Start gyro communication
-  Serial.print("About to start callibration!");
+  Serial.println("About to start callibration!");
   delay(5000);                   //Give user time to put drone down before calibration
   mpu6050.calcGyroOffsets(true);  //true if you want debug output, blank if not !!Do not move during this period!!
-  Serial.print("Finished calibrating gyro.");
+  Serial.println("Finished calibrating gyro.");
 
-  Serial.print("Initializing servos");
+  Serial.println("Initializing current sensor.");
+  while(!ina219.begin());
+  pinMode(speaker, OUTPUT);
+  Serial.println("Finished initializing current sensor");
+  
+  Serial.println("Initializing servos");
   initializeServos();             //Start connection to motors
-  Serial.print("Finished initializing servos");
-  Serial.print("Finished setup in: " + String(millis() - now) + " ms");
+  Serial.println("Finished initializing servos");
+  Serial.println("Finished setup in: " + String(millis() - now) + " ms");
 }
 
 void loop() {
