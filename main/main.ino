@@ -253,9 +253,7 @@ Serial.print("tekst in" + String(now));
   Serial.print("Initializing servos");
   initializeServos();             //Start connection to motors
   Serial.print("Finished initializing servos");
-  Serial.print("Finished setup in: ");
-  Serial.print(millis() - now);
-  Serial.print(" ms");
+  Serial.print("Finished setup in: " + String(millis() - now) + " ms");
 }
 
 void loop() {
