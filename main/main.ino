@@ -235,7 +235,7 @@ void applyMotors() {
 
 void voltageWarning(){
 
-  if(ina219.getBusVoltage_V() <= 6.5 || batteryWarning == true){
+  if(ina219.getBusVoltage_V() <= 6.5){
     ledcWriteTone(speaker, 3800);
     batteryWarning = true;
   }
@@ -296,7 +296,7 @@ void loop() {
   calculatePID_Pitch();
   calculatePID_Yaw();
   lastTime = currentTime;
-
+g
   if (failsafe)return;  //Disable everything if signal is lossed or arm button is off.
   if (debugMode > 0)return;
   
