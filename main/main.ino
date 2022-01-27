@@ -32,6 +32,9 @@ const int8_t rxpin {16};
 const int8_t txpin {17}; //We don't use this, set it to whatever.
 HardwareSerial mySerial(1);
 
+const uint8_t buttonUnpressed {1400};   //SBUS value when button is NOT pressed
+const uint8_t buttonPressed {1600};     //value when PRESSED
+
 const int minValue {1000};     //min max values ESC
 const int maxValue {2000};
 
@@ -126,7 +129,7 @@ void getSbus() {
     sbus_data = sbus_rx.ch();
 
   }
-  if (sbus_rx.failsafe() || sbus_data[5] <= 1400) {
+  if (sbus_rx.failsafe() || sbus_data[4] <= buttonUnpressed) {
     failsafe = true;
     motor1.writeMicroseconds(0);      //Disable motors if receivers looses connection
     motor2.writeMicroseconds(0);
@@ -334,7 +337,7 @@ void debug() {
       Serial.println("YAW= " + String(sbus_data[3]));
       Serial.println("PITCH= " + String(sbus_data[1]));
       Serial.print("ARM= ");
-      if (sbus_data[4] >= 1600) {
+      if (sbus_data[4] >= buttonPressed) {
         Serial.print("ON" + '\n');
       } else Serial.print("OFF" + '\n');
       break;
@@ -406,7 +409,7 @@ void debug() {
     //Loop
     while(true){
       batteryWarning = voltageWarning();
-      if(batteryWarning || sbus_data[5] <= 1400) return;
+      if(batteryWarning || sbus_data[5] <= buttonUnpressed) return;
       amogus();
     }
   }
