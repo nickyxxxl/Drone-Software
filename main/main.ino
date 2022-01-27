@@ -49,6 +49,8 @@ const float kp_yaw {1},
       kd_yaw {1};
 
 const float axisSensitivity {100}; //How much degrees/s should max stick be?
+
+void FakingTasks(void * pvParameters);
 //////////////////////////////////////////////////////////////////////////
 
 MPU6050 mpu6050(Wire);
@@ -388,7 +390,7 @@ void debug() {
       delay(10000);
       break;
   }
-
+}
 
 
 
@@ -404,14 +406,15 @@ void debug() {
     //Loop
     while(true){
       batteryWarning = voltageWarning();
-      if(batteryWarning) return;
+      if(batteryWarning || sbus_data[5] <= 1400) return;
       amogus();
     }
   }
 
 
 bool voltageWarning(){
-
+  bool warning{false};
+  
   if(ina219.getBusVoltage_V() <= 6.5){
     tone(speaker,3800, channel);
     warning = true;
@@ -459,5 +462,3 @@ void adv(unsigned int note, unsigned long del) {
   adv(NOTE_DS4, 213);
   adv(NOTE_C2, 1276);
   }
-
-}
