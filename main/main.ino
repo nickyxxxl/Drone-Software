@@ -3,6 +3,7 @@
 #include <ESP32Servo.h>
 #include <sbus.h>
 #include <Adafruit_INA219.h>
+#include <Tone32.h>
 
 
 
@@ -23,7 +24,8 @@ int debugMode {2};
 #define _motor3 32
 #define _motor4 33
 
-#define speaker 16
+#define speaker 27
+#define channel 0
 
 //Define pin for sbus rx and tx channel (we only care about rx)
 const int8_t rxpin {16};
@@ -60,8 +62,7 @@ Servo motor4;                       //  3 ----- 1
 
 //Operational variables
 bool failsafe = false;
-bool batteryWarning = false;
-float deltaT {};
+float deltaT;
 
 float currentTime;
 float lastTime;
@@ -233,16 +234,6 @@ void applyMotors() {
   motor4.writeMicroseconds(m4);
 }
 
-void voltageWarning(){
-
-  if(ina219.getBusVoltage_V() <= 6.5){
-    ledcWriteTone(speaker, 3800);
-    batteryWarning = true;
-  }
-  
-}
-
-
 void setup() {
 
   int now = millis();
@@ -272,7 +263,13 @@ Serial.println("tekst in" + String(now));
   Serial.println("Initializing servos");
   initializeServos();             //Start connection to motors
   Serial.println("Finished initializing servos");
+
+  //Offload voltage check and other TASKS to 2nd core
+  Serial.println("Initializing second core.");
+  xTaskCreatePinnedToCore(FakingTasks, "Task2", 10000, NULL, 1, NULL,  0); 
+  
   Serial.println("Finished setup in: " + String(millis() - now) + " ms");
+
 }
 
 void loop() {
@@ -296,7 +293,7 @@ void loop() {
   calculatePID_Pitch();
   calculatePID_Yaw();
   lastTime = currentTime;
-g
+  
   if (failsafe)return;  //Disable everything if signal is lossed or arm button is off.
   if (debugMode > 0)return;
   
@@ -390,6 +387,77 @@ void debug() {
       }motor4.writeMicroseconds(0);
       delay(10000);
       break;
+  }
+
+
+
+
+
+////////////////////////////2ND CORE////////////////////////////////
+
+  void FakingTasks(void * pvParameters){
+    //Setup
+    Serial.println("Fixing wires");
+    Serial.println("Bodies in electrical: " + String(xPortGetCoreID()));
+    bool batteryWarning = false;
+
+    //Loop
+    while(true){
+      batteryWarning = voltageWarning();
+      if(batteryWarning) return;
+      amogus();
+    }
+  }
+
+
+bool voltageWarning(){
+
+  if(ina219.getBusVoltage_V() <= 6.5){
+    tone(speaker,3800, channel);
+    warning = true;
+  }
+  return warning;
+}
+
+void adv(unsigned int note, unsigned long del) {
+  tone(speaker, note, channel);
+  delay(del);
+  noTone(speaker, channel);
+}
+
+
+
+  void amogus(){
+  adv(NOTE_C2, 638);
+  adv(NOTE_C4, 319);
+  adv(NOTE_DS4, 319);
+  adv(NOTE_F4, 319);
+  adv(NOTE_FS4, 319);
+  adv(NOTE_F4, 319);
+  adv(NOTE_DS4, 319);
+
+  adv(NOTE_C4, 957);
+  adv(NOTE_AS4, 160);
+  adv(NOTE_D4, 160);
+  adv(NOTE_C4, 957);
+  adv(NOTE_G3, 320);
+
+  adv(NOTE_C2, 638);
+  adv(NOTE_C4, 319);
+  adv(NOTE_DS4, 319);
+  adv(NOTE_F4, 319);
+  adv(NOTE_FS4, 319);
+  adv(NOTE_F4, 319);
+  adv(NOTE_DS4, 319);
+
+  adv(NOTE_FS4, 1276);
+  adv(NOTE_FS4, 213);
+  adv(NOTE_F4, 213);
+  adv(NOTE_DS4, 213);
+  adv(NOTE_FS4, 213);
+  adv(NOTE_F4, 213);
+  adv(NOTE_DS4, 213);
+  adv(NOTE_C2, 1276);
   }
 
 }
