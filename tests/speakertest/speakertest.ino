@@ -44,7 +44,7 @@ void Task2code( void * pvParameters ){
   adv(NOTE_DS4, 319);
 
   adv(NOTE_C4, 957);
-  adv(NOTE_A4, 160);
+  adv(NOTE_AS4, 160);
   adv(NOTE_D4, 160);
   adv(NOTE_C4, 957);
   adv(NOTE_G3, 320);
