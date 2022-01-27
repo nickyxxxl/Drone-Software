@@ -5,17 +5,6 @@
 #include <Adafruit_INA219.h>
 #include <Tone32.h>
 
-
-
-int debugMode {2};
-
-//Mode 0: No debug
-//Mode 1: Debug gyro
-//Mode 2: Debug receiver
-//Mode 3: Debug PID
-//Mode 4: Debug motors
-//mode 5: spin motors
-
 ///////////////////////////User defined/////////////////////////////////////
 
 //Define the pins for each motor
@@ -279,13 +268,6 @@ Serial.println("tekst in" + String(now));
 
 void loop() {
 
-  //Enter debug mode
-  if (debugMode > 0) {
-    debug();
-    delay(100);
-  }
-
-
   //////Get system data//////
   getSbus();
   getGyro();
@@ -300,103 +282,10 @@ void loop() {
   lastTime = currentTime;
   
   if (failsafe)return;  //Disable everything if signal is lossed or arm button is off.
-  if (debugMode > 0)return;
-  
+    
   //////Apply to motors//////
   applyMotors();
 }
-
-
-
-
-
-////////////////////////////Debugging////////////////////////////////
-
-//Mode 0: No debug
-//Mode 1: Debug gyro
-//Mode 2: Debug receiver
-//Mode 3: Debug PID
-//Mode 4: Debug motors
-//Mode 5: Spin motors
-
-void debug() {
-
- switch (debugMode) {
-
-    //debug gyro
-    case 1:
-      Serial.println("GYRO ROLL= " + String(gyro_roll));
-      Serial.println("GYRO PITCH= " + String(gyro_pitch));
-      Serial.println("GYRO YAW= " + String(gyro_yaw));
-      break;
-
-    //debug receiver
-    case 2:
-      Serial.println("THROTTLE= " + String(sbus_data[2]));
-      Serial.println("ROLL= " + String(sbus_data[0]));
-      Serial.println("YAW= " + String(sbus_data[3]));
-      Serial.println("PITCH= " + String(sbus_data[1]));
-      Serial.print("ARM= ");
-      if (sbus_data[4] >= buttonPressed) {
-        Serial.print("ON" + '\n');
-      } else Serial.print("OFF" + '\n');
-      break;
-
-    //debug PID output
-    case 3:
-      Serial.print("PID ROLL= " + String(PID_output_roll));
-      Serial.print("PID PITCH= " + String(PID_output_pitch));
-      Serial.print("PID YAW= " + String(PID_output_yaw));
-      break;
-
-    //display pwm motors
-    case 4:
-      Serial.print("Motor 4: " + String(m4));
-      Serial.print("          ");
-      Serial.print("Motor 2: " + String(m2));
-      Serial.print('\n');
-      Serial.print('\n');
-      Serial.print("Motor 3: " + String(m3));
-      Serial.print("          ");
-      Serial.print("Motor 1: " + String(m1));
-      break;
-
-    //Spin motors
-    case 5:
-      int now = millis();
-      Serial.print("Now spinning motor 1!");
-      while (millis() <= now + 2000) {
-        motor1.writeMicroseconds(1300);
-        delay(600);
-      }motor1.writeMicroseconds(0);
-
-      now = millis();
-      Serial.print("Now spinning motor 2!");
-      while (millis() <= now + 2000) {
-        motor2.writeMicroseconds(1300);
-        delay(600);
-      }motor2.writeMicroseconds(0);
-
-      now = millis();
-      Serial.print("Now spinning motor 3!");
-      while (millis() <= now + 2000) {
-        motor3.writeMicroseconds(1300);
-        delay(600);
-      }motor3.writeMicroseconds(0);
-
-      now = millis();
-      Serial.print("Now spinning motor 4!");
-      while (millis() <= now + 2000) {
-        motor4.writeMicroseconds(1300);
-        delay(600);
-      }motor4.writeMicroseconds(0);
-      delay(10000);
-      break;
-  }
-}
-
-
-
 
 ////////////////////////////2ND CORE////////////////////////////////
 
