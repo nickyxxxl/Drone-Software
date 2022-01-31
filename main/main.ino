@@ -17,15 +17,23 @@
 #define channel 0
 
 //Define pin for sbus rx and tx channel (we only care about rx)
-const int8_t rxpin {16};
+const int8_t rxpin {
+  16
+};
 const int8_t txpin {17}; //We don't use this, set it to whatever.
 HardwareSerial mySerial(1);
 
 const uint8_t buttonUnpressed {1400};   //SBUS value when button is NOT pressed
-const uint8_t buttonPressed {1600};     //value when PRESSED
+const uint8_t buttonPressed {
+  1600
+};     //value when PRESSED
+bool lastArmButtonState{0};
+bool armButtonState{0};
 
 const int minValue {1000};     //min max values ESC
-const int maxValue {2000};
+const int maxValue {
+  2000
+};
 
 //PID tuning
 const float kp_roll {1},
@@ -43,6 +51,11 @@ const float kp_yaw {1},
 const float axisSensitivity {100}; //How much degrees/s should max stick be?
 
 void FakingTasks(void * pvParameters);
+void Armsound(void * pvParameters);
+
+
+TaskHandle_t TaskHandle_2;  //Amogus
+TaskHandle_t TaskHandle_3;  //Coc
 //////////////////////////////////////////////////////////////////////////
 
 MPU6050 mpu6050(Wire);
@@ -163,6 +176,22 @@ void mapInput() {
   throttle = map(sbus_data[2], 180, 1820, 1000, 1750);
 }
 
+void playArmSound() {
+  if (sbus_data[4] <= buttonUnpressed) {
+    armButtonState = false;
+    if (armButtonState != lastArmButtonState) {
+      lastArmButtonState = armButtonState;
+      xTaskCreatePinnedToCore(Armsound, "Task3", 10000, NULL, 1, &TaskHandle_3,  0);
+    }
+  }
+  if (sbus_data[4] >= buttonPressed) {
+    armButtonState = true;
+    if (armButtonState != lastArmButtonState) {
+      lastArmButtonState = armButtonState;
+      xTaskCreatePinnedToCore(Armsound, "Task3", 10000, NULL, 1, &TaskHandle_3,  0);
+    }
+  }
+}
 
 //PID for each axis
 void calculatePID_Roll() {
@@ -231,8 +260,8 @@ void applyMotors() {
 void setup() {
 
   int now = millis();
-  
-Serial.println("tekst in" + String(now));
+
+  Serial.println("tekst in" + String(now));
   Serial.begin(115200);
   Serial.println("Test2!");
   while (!Serial) {}
@@ -250,18 +279,18 @@ Serial.println("tekst in" + String(now));
   Serial.println("Finished calibrating gyro.");
 
   Serial.println("Initializing current sensor.");
-  while(!ina219.begin());
+  while (!ina219.begin());
   ledcSetup(speaker, 0, 8);
   Serial.println("Finished initializing current sensor");
-  
+
   Serial.println("Initializing servos");
   initializeServos();             //Start connection to motors
   Serial.println("Finished initializing servos");
 
   //Offload voltage check and other TASKS to 2nd core
   Serial.println("Initializing second core.");
-  xTaskCreatePinnedToCore(FakingTasks, "Task2", 10000, NULL, 1, NULL,  0); 
-  
+  xTaskCreatePinnedToCore(FakingTasks, "Task2", 10000, NULL, 1, &TaskHandle_2,  0);
+
   Serial.println("Finished setup in: " + String(millis() - now) + " ms");
 
 }
@@ -270,6 +299,7 @@ void loop() {
 
   //////Get system data//////
   getSbus();
+  playArmSound();
   getGyro();
   mapInput();
 
@@ -280,35 +310,47 @@ void loop() {
   calculatePID_Pitch();
   calculatePID_Yaw();
   lastTime = currentTime;
-  
+
   if (failsafe)return;  //Disable everything if signal is lossed or arm button is off.
-    
+
   //////Apply to motors//////
   applyMotors();
 }
 
 ////////////////////////////2ND CORE////////////////////////////////
 
-  void FakingTasks(void * pvParameters){
-    //Setup
-    Serial.println("Fixing wires");
-    Serial.println("Bodies in electrical: " + String(xPortGetCoreID()));
-    bool batteryWarning = false;
 
-    //Loop
-    while(true){
-      batteryWarning = voltageWarning();
-      if(batteryWarning || sbus_data[5] <= buttonUnpressed) return;
-      amogus();
-    }
+void coc();
+void Armsound(void * pvParameters) {
+  //Setup
+  vTaskDelete(&TaskHandle_2);
+  Serial.println("Playing Armsound on: " + String(xPortGetCoreID()));
+  coc();
+  xTaskCreatePinnedToCore(FakingTasks, "Task2", 10000, NULL, 1, &TaskHandle_2,  0);
+  vTaskDelete(NULL);
+
+}
+
+void FakingTasks(void * pvParameters) {
+  //Setup
+  Serial.println("Fixing wires");
+  Serial.println("Bodies in electrical: " + String(xPortGetCoreID()));
+  bool batteryWarning = false;
+
+  //Loop
+  while (true) {
+    batteryWarning = voltageWarning();
+    if (batteryWarning || sbus_data[5] <= buttonUnpressed) return;
+    amogus();
   }
+}
 
 
-bool voltageWarning(){
+bool voltageWarning() {
   bool warning{false};
-  
-  if(ina219.getBusVoltage_V() <= 6.5){
-    tone(speaker,3800, channel);
+
+  if (ina219.getBusVoltage_V() <= 6.5) {
+    tone(speaker, 3800, channel);
     warning = true;
   }
   return warning;
@@ -322,7 +364,7 @@ void adv(unsigned int note, unsigned long del) {
 
 
 
-  void amogus(){
+void amogus() {
   adv(NOTE_C2, 638);
   adv(NOTE_C4, 319);
   adv(NOTE_DS4, 319);
@@ -353,4 +395,17 @@ void adv(unsigned int note, unsigned long del) {
   adv(NOTE_F4, 213);
   adv(NOTE_DS4, 213);
   adv(NOTE_C2, 1276);
-  }
+}
+
+void coc() {
+  adv(NOTE_CS4, 136);
+  adv(NOTE_FS4, 136);
+  adv(NOTE_GS4, 136);
+  adv(NOTE_CS5, 136);
+  adv(NOTE_FS5, 136);
+  delay(408);
+  adv(NOTE_DS4, 272);
+  adv(NOTE_FS4, 272);
+  adv(NOTE_DS4, 272);
+  adv(NOTE_GS4, 272);
+}
