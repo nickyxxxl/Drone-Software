@@ -7,9 +7,9 @@ float gyro_roll, gyro_pitch, gyro_yaw;
 
 void getGyro() {
   mpu6050.update();
-  gyro_roll = mpu6050.getGyroX();
-  gyro_pitch = mpu6050.getGyroY();
-  gyro_yaw = mpu6050.getGyroZ();
+  gyro_roll = mpu6050.getGyroY();
+  gyro_pitch = mpu6050.getGyroZ();
+  gyro_yaw = mpu6050.getGyroX();
 }
 
 void setup() {

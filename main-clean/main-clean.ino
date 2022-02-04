@@ -8,13 +8,10 @@
 ///////////////////////////User defined/////////////////////////////////////
 
 //Define the pins for each motor
-#define _motor1 34
-#define _motor2 35
+#define _motor1 25
+#define _motor2 26
 #define _motor3 32
 #define _motor4 33
-
-#define speaker 27
-#define channel 0
 
 //Define pin for sbus rx and tx channel (we only care about rx)
 const int8_t rxpin {16};
@@ -28,18 +25,20 @@ const int maxValue {2000};
 const float kp_roll {1.3},
       ki_roll {0.04},
       kd_roll {18.0};
+const int max_roll = 400;
 
 const float kp_pitch {1.3},
       ki_pitch {0.04},
       kd_pitch {18.0};
+const int max_pitch = 400;
 
 const float kp_yaw {4.0},
       ki_yaw {0.02},
       kd_yaw {0.0};
+const int max_yaw = 400;
 
 const float axisSensitivity {100}; //How much degrees/s should max stick be?
 
-void FakingTasks(void * pvParameters);
 //////////////////////////////////////////////////////////////////////////
 
 MPU6050 mpu6050(Wire);
@@ -117,23 +116,14 @@ void getSbus() {
   if (sbus_rx.Read()) {
     sbus_data = sbus_rx.ch();
   }
-  if (sbus_rx.failsafe() || sbus_data[4] <= 1400) {
-    failsafe = true;
-    motor1.writeMicroseconds(0);      //Disable motors if receivers looses connection
-    motor2.writeMicroseconds(0);
-    motor3.writeMicroseconds(0);
-    motor4.writeMicroseconds(0);
-  }
-  else failsafe = false;
-
 }
 
 
 void getGyro() {
   mpu6050.update();
-  gyro_roll = mpu6050.getGyroX();
-  gyro_pitch = mpu6050.getGyroY();
-  gyro_yaw = mpu6050.getGyroZ();
+  gyro_roll = mpu6050.getGyroY();
+  gyro_pitch = mpu6050.getGyroZ();
+  gyro_yaw = mpu6050.getGyroX();
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -151,11 +141,10 @@ float mapFloat(float input, float in_min, float in_max, float out_min, float out
 //channel 3: throttle    1000-2000    1000 tot 1750
 //channel 4: Yaw         1000-2000    -100 tot 100
 //channel 5: arm         1000-2000    <1400 of >1600
-//channel 6: mode        1000-2000
+//channel 6: mode        1000-2000    
 //channel 7: failsafe    1000-2000
 
 void mapInput() {
-
   target_roll = map(sbus_data[0], 180, 1820, -axisSensitivity, axisSensitivity);
   target_pitch = map(sbus_data[1], 180, 1820, -axisSensitivity, axisSensitivity);
   target_yaw = map(sbus_data[3], 180, 1820, -axisSensitivity, axisSensitivity);
@@ -210,15 +199,29 @@ void calculatePID_Yaw() {
 
 
 void applyMotors() {
-  if (sbus_rx.lost_frame()) {
+  if (sbus_rx.lost_frame()) {                                      //ignore control if frame lost
     return;
   }
 
-  m1 = throttle - PID_output_roll - PID_output_pitch - PID_output_yaw;
-  m2 = throttle - PID_output_roll + PID_output_pitch + PID_output_yaw;
-  m3 = throttle + PID_output_roll - PID_output_pitch + PID_output_yaw;
-  m4 = throttle + PID_output_roll + PID_output_pitch - PID_output_yaw;
-
+  if (sbus_data[4] < 1200 || sbus_rx.failsafe()) {                                       //arm
+    motor1.writeMicroseconds(0);
+    motor2.writeMicroseconds(0);
+    motor3.writeMicroseconds(0);
+    motor4.writeMicroseconds(0);
+    return;
+  }
+  
+  if (sbus_data[5] < 1200){                                        //direct mode
+    m1 = throttle;
+    m2 = throttle;
+    m3 = throttle;
+    m4 = throttle;
+  } else if (sbus_data[5] > 900 && sbus_data[5] < 1800) {         //PID mode
+    m1 = throttle - PID_output_roll - PID_output_pitch - PID_output_yaw;
+    m2 = throttle - PID_output_roll + PID_output_pitch + PID_output_yaw;
+    m3 = throttle + PID_output_roll - PID_output_pitch + PID_output_yaw;
+    m4 = throttle + PID_output_roll + PID_output_pitch - PID_output_yaw;
+  }
   constrain(m1, minValue, maxValue);  //constrain between min and max esc value
   constrain(m2, minValue, maxValue);
   constrain(m3, minValue, maxValue);
@@ -231,29 +234,15 @@ void applyMotors() {
 }
 
 void setup() {
-
-  int now = millis();
+  delay(1000);
   
-Serial.println("tekst in" + String(now));
-  Serial.begin(115200);
-
-  Serial.println("Starting sbus connection.");
   sbus_rx.Begin(rxpin, txpin);    //Begin Sbus communication
 
-  Serial.println("Starting gyro connection.");
   Wire.begin();
   mpu6050.begin();                //Start gyro communication
-  Serial.println("About to start callibration!");
-  delay(2000);                   //Give user time to put drone down before calibration
+  
   mpu6050.calcGyroOffsets(true);  //true if you want debug output, blank if not !!Do not move during this period!!
-  Serial.println("Finished calibrating gyro.");
-  
-  Serial.println("Initializing servos");
   initializeServos();             //Start connection to motors
-  Serial.println("Finished initializing servos");
-  
-  Serial.println("Finished setup in: " + String(millis() - now) + " ms");
-
 }
 
 void loop() {
@@ -263,15 +252,16 @@ void loop() {
   mapInput();
 
   //////Calculate PID//////
-  currentTime = millis();
-  deltaT = (currentTime - lastTime) * 0.001; //*0.001 to go from ms to s
-  calculatePID_Roll();
-  calculatePID_Pitch();
-  calculatePID_Yaw();
-  lastTime = currentTime;
-  
-  if (failsafe)return;  //Disable everything if signal is lossed or arm button is off.
+  if (sbus_data[5] > 900 && sbus_data[5] < 1800) {
+    currentTime = millis();
+    deltaT = (currentTime - lastTime) * 0.001; //*0.001 to go from ms to s
+    calculatePID_Roll();
+    calculatePID_Pitch();
+    calculatePID_Yaw();
+    lastTime = currentTime;
+  }
     
   //////Apply to motors//////
   applyMotors();
+  delay(6);
 }
