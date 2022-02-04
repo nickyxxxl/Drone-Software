@@ -89,7 +89,6 @@ bfs::SbusRx sbus_rx(&mySerial);
 std::array<int16_t, bfs::SbusRx::NUM_CH()> sbus_data;
 
 
-
 ///////////////////////////SETUP/////////////////////////////////////
 
 void initializeServos() {
@@ -110,10 +109,10 @@ void initializeServos() {
 
 //Store Sbus data in array sbus_rx
 void getSbus() {
-  if (sbus_rx.lost_frame()) {
-    return;
-  }
+  
+  
   if (sbus_rx.Read()) {
+    if (sbus_rx.lost_frame())return;
     sbus_data = sbus_rx.ch();
   }
 }
@@ -199,11 +198,8 @@ void calculatePID_Yaw() {
 
 
 void applyMotors() {
-  if (sbus_rx.lost_frame()) {                                      //ignore control if frame lost
-    return;
-  }
 
-  if (sbus_data[4] < 1200 || sbus_rx.failsafe()) {                                       //arm
+  if (sbus_data[4] < 1200 || sbus_rx.failsafe()) {              //Disable motors when failsafe or unarmed
     motor1.writeMicroseconds(0);
     motor2.writeMicroseconds(0);
     motor3.writeMicroseconds(0);
@@ -211,12 +207,12 @@ void applyMotors() {
     return;
   }
   
-  if (sbus_data[5] < 1200){                                        //direct mode
+  if (sbus_data[5] < 1200){                               //direct mode
     m1 = throttle;
     m2 = throttle;
     m3 = throttle;
     m4 = throttle;
-  } else if (sbus_data[5] > 900 && sbus_data[5] < 1800) {         //PID mode
+  } else if (sbus_data[5] > 900 && sbus_data[5] < 1800) {                  //PID mode
     m1 = throttle - PID_output_roll - PID_output_pitch - PID_output_yaw;
     m2 = throttle - PID_output_roll + PID_output_pitch + PID_output_yaw;
     m3 = throttle + PID_output_roll - PID_output_pitch + PID_output_yaw;
@@ -250,6 +246,7 @@ void loop() {
   getSbus();
   getGyro();
   mapInput();
+
 
   //////Calculate PID//////
   if (sbus_data[5] > 900 && sbus_data[5] < 1800) {
