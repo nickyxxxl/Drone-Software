@@ -17,7 +17,7 @@ const int8_t rxpin {16};
 const int8_t txpin {17}; //We don't use this, set it to whatever.
 HardwareSerial mySerial(1);
 
-const int minValue {800};     //min max values ESC
+const int minValue {780};     //min max values ESC
 const int maxValue {2000};
 
 //PID tuning
@@ -144,7 +144,7 @@ void mapInput() {
   target_roll = map(sbus_data[0], 180, 1820, -axisSensitivity, axisSensitivity);
   target_pitch = map(sbus_data[1], 180, 1820, -axisSensitivity, axisSensitivity);
   target_yaw = map(sbus_data[3], 180, 1820, -axisSensitivity, axisSensitivity);
-  throttle = map(sbus_data[2], 180, 1820, 800, 1750);
+  throttle = map(sbus_data[2], 180, 1820, 780, 2000);
 }
 
 
@@ -201,22 +201,7 @@ void applyMotors() {
     m2 = throttle - target_roll + target_pitch + target_yaw;
     m3 = throttle + target_roll - target_pitch + target_yaw;
     m4 = throttle + target_roll + target_pitch - target_yaw;
-  } else if (sbus_data[5] > 900 && sbus_data[5] < 1800) {         //PID mode
-
-  if (sbus_data[4] < 1200 || sbus_rx.failsafe()) {              //Disable motors when failsafe or unarmed
-    motor1.writeMicroseconds(0);
-    motor2.writeMicroseconds(0);
-    motor3.writeMicroseconds(0);
-    motor4.writeMicroseconds(0);
-    return;
-  }
-  
-  if (sbus_data[5] < 1200){                               //direct mode
-    m1 = throttle;
-    m2 = throttle;
-    m3 = throttle;
-    m4 = throttle;
-  } else if (sbus_data[5] > 900 && sbus_data[5] < 1800) {                  //PID mode
+  } else if (sbus_data[5] > 900 && sbus_data[5] < 1800) {       //PID mode
     m1 = throttle - PID_output_roll - PID_output_pitch - PID_output_yaw;
     m2 = throttle - PID_output_roll + PID_output_pitch + PID_output_yaw;
     m3 = throttle + PID_output_roll - PID_output_pitch + PID_output_yaw;
