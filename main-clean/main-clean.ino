@@ -2,7 +2,6 @@
 #include <Wire.h>
 #include <ESP32Servo.h>
 #include <sbus.h>
-#include <Adafruit_INA219.h>
 #include <Tone32.h>
 
 ///////////////////////////User defined/////////////////////////////////////
@@ -37,7 +36,7 @@ const float kp_yaw {4.0},
       kd_yaw {0.0};
 const int max_yaw = 400;
 
-const float axisSensitivity {100}; //How much degrees/s should max stick be?
+const float axisSensitivity {1000}; //How much degrees/s should max stick be?
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -110,9 +109,6 @@ void initializeServos() {
 
 //Store Sbus data in array sbus_rx
 void getSbus() {
-  if (sbus_rx.lost_frame()) {
-    return;
-  }
   if (sbus_rx.Read()) {
     sbus_data = sbus_rx.ch();
   }
@@ -199,41 +195,40 @@ void calculatePID_Yaw() {
 
 
 void applyMotors() {
-  if (sbus_rx.lost_frame()) {                                      //ignore control if frame lost
-    return;
-  }
-
-  if (sbus_data[4] < 1200 || sbus_rx.failsafe()) {                                       //arm
-    motor1.writeMicroseconds(0);
-    motor2.writeMicroseconds(0);
-    motor3.writeMicroseconds(0);
-    motor4.writeMicroseconds(0);
-    return;
-  }
   
   if (sbus_data[5] < 1200){                                        //direct mode
-    m1 = throttle;
-    m2 = throttle;
-    m3 = throttle;
-    m4 = throttle;
+    m1 = throttle - target_roll - target_pitch - target_yaw;
+    m2 = throttle - target_roll + target_pitch + target_yaw;
+    m3 = throttle + target_roll - target_pitch + target_yaw;
+    m4 = throttle + target_roll + target_pitch - target_yaw;
   } else if (sbus_data[5] > 900 && sbus_data[5] < 1800) {         //PID mode
     m1 = throttle - PID_output_roll - PID_output_pitch - PID_output_yaw;
     m2 = throttle - PID_output_roll + PID_output_pitch + PID_output_yaw;
     m3 = throttle + PID_output_roll - PID_output_pitch + PID_output_yaw;
     m4 = throttle + PID_output_roll + PID_output_pitch - PID_output_yaw;
   }
-  constrain(m1, minValue, maxValue);  //constrain between min and max esc value
-  constrain(m2, minValue, maxValue);
-  constrain(m3, minValue, maxValue);
-  constrain(m4, minValue, maxValue);
+  m1 = constrain(m1, minValue, maxValue);  //constrain between min and max esc value
+  m2 = constrain(m2, minValue, maxValue);
+  m3 = constrain(m3, minValue, maxValue);
+  m4 = constrain(m4, minValue, maxValue);
 
-  motor1.writeMicroseconds(m1);
-  motor2.writeMicroseconds(m2);
-  motor3.writeMicroseconds(m3);
-  motor4.writeMicroseconds(m4);
+  Serial.print("1: " + String(m1) + "\t" + "2: " + String(m2) + "\t" + "3: " + String(m3) + "\t" + "4: " + String(m4) + "\n");
+  
+  if (sbus_data[4] < 1200 || sbus_rx.failsafe()) {                                       //arm
+    motor1.writeMicroseconds(0);
+    motor2.writeMicroseconds(0);
+    motor3.writeMicroseconds(0);
+    motor4.writeMicroseconds(0);
+  } else {
+    motor1.writeMicroseconds(m1);
+    motor2.writeMicroseconds(m2);
+    motor3.writeMicroseconds(m3);
+    motor4.writeMicroseconds(m4);
+  }
 }
 
 void setup() {
+  Serial.begin(115200);
   delay(1000);
   
   sbus_rx.Begin(rxpin, txpin);    //Begin Sbus communication
@@ -241,16 +236,20 @@ void setup() {
   Wire.begin();
   mpu6050.begin();                //Start gyro communication
   
-  mpu6050.calcGyroOffsets(true);  //true if you want debug output, blank if not !!Do not move during this period!!
+  mpu6050.setGyroOffsets(-17.10, 2.69, 0.63);  //true if you want debug output, blank if not !!Do not move during this period!!
   initializeServos();             //Start connection to motors
 }
 
 void loop() {
   //////Get system data//////
   getSbus();
+  if (sbus_rx.lost_frame()) {                                      //ignore control if frame lost
+    Serial.println("frame lost!");
+    delay(3);
+    return;
+  }
   getGyro();
   mapInput();
-
   //////Calculate PID//////
   if (sbus_data[5] > 900 && sbus_data[5] < 1800) {
     currentTime = millis();
@@ -260,8 +259,7 @@ void loop() {
     calculatePID_Yaw();
     lastTime = currentTime;
   }
-    
   //////Apply to motors//////
   applyMotors();
-  delay(6);
+  delay(12);
 }
