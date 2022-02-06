@@ -196,17 +196,18 @@ void calculatePID_Yaw() {
 
 void applyMotors() {
     
-  if (sbus_data[5] < 1200){                                        //direct mode
+  if (sbus_data[5] < 900){                                        //direct mode
     m1 = throttle - target_roll - target_pitch - target_yaw;
     m2 = throttle - target_roll + target_pitch + target_yaw;
     m3 = throttle + target_roll - target_pitch + target_yaw;
     m4 = throttle + target_roll + target_pitch - target_yaw;
-  } else if (sbus_data[5] > 900 && sbus_data[5] < 1800) {       //PID mode
+  } else if (sbus_data[5] < 1800) {       //PID mode
     m1 = throttle - PID_output_roll - PID_output_pitch - PID_output_yaw;
     m2 = throttle - PID_output_roll + PID_output_pitch + PID_output_yaw;
     m3 = throttle + PID_output_roll - PID_output_pitch + PID_output_yaw;
     m4 = throttle + PID_output_roll + PID_output_pitch - PID_output_yaw;
   }
+  
   m1 = constrain(m1, minValue, maxValue);  //constrain between min and max esc value
   m2 = constrain(m2, minValue, maxValue);
   m3 = constrain(m3, minValue, maxValue);
