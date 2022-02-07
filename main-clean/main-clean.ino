@@ -90,18 +90,17 @@ std::array<int16_t, bfs::SbusRx::NUM_CH()> sbus_data;
 ///////////////////////////SETUP/////////////////////////////////////
 
 void initializeServos() {
-  //Enable motors     (pin, pwm channel, min angle, max angle, min pulse width, max pulse width)
+  //Enable motors
  
-  
-  motor1.attach(_motor1, minValue, maxValue);
-  motor2.attach(_motor2, minValue, maxValue);
-  motor3.attach(_motor3, minValue, maxValue);
-  motor4.attach(_motor4, minValue, maxValue);
+  motor1.attach(_motor1);
+  motor2.attach(_motor2);
+  motor3.attach(_motor3);
+  motor4.attach(_motor4);
 
-  motor1.writeMicroseconds(1000);      //Possible problem with initializing with 0, changed to 1000!
-  motor2.writeMicroseconds(1000);
-  motor3.writeMicroseconds(1000);
-  motor4.writeMicroseconds(1000);
+//  motor1.writeMicroseconds(1000);      //Possible problem with initializing with 0, changed to 1000!
+//  motor2.writeMicroseconds(1000);
+//  motor3.writeMicroseconds(1000);
+//  motor4.writeMicroseconds(1000);
 }
 ///////////////////////////////////////////////////////////////////////
 
@@ -210,10 +209,16 @@ void applyMotors() {
     m4 = throttle + PID_output_roll + PID_output_pitch - PID_output_yaw;
   }
   
-//  m1 = constrain(m1, minValue, maxValue);  //constrain between min and max esc value
-//  m2 = constrain(m2, minValue, maxValue);  //Replaced by servo library
-//  m3 = constrain(m3, minValue, maxValue);
-//  m4 = constrain(m4, minValue, maxValue);
+    m1 = constrain(m1, minValue, maxValue);  //constrain between min and max esc value
+    m2 = constrain(m2, minValue, maxValue);
+    m3 = constrain(m3, minValue, maxValue);
+    m4 = constrain(m4, minValue, maxValue);
+
+    m1 = map(m1, minValue, maxValue, 0, 180);
+    m2 = map(m2, minValue, maxValue, 0, 180);
+    m3 = map(m3, minValue, maxValue, 0, 180);
+    m4 = map(m4, minValue, maxValue, 0, 180);
+
 
   Serial.print("1: " + String(m1) + "\t" + "2: " + String(m2) + "\t" + "3: " + String(m3) + "\t" + "4: " + String(m4) + "\n");
   
@@ -223,10 +228,14 @@ void applyMotors() {
     motor3.writeMicroseconds(0);
     motor4.writeMicroseconds(0);
   } else {
-    motor1.writeMicroseconds(m1);
-    motor2.writeMicroseconds(m2);
-    motor3.writeMicroseconds(m3);
-    motor4.writeMicroseconds(m4);
+//    motor1.writeMicroseconds(m1);
+//    motor2.writeMicroseconds(m2);
+//    motor3.writeMicroseconds(m3);
+//    motor4.writeMicroseconds(m4);
+    motor1.write(m1);
+    motor2.write(m2);
+    motor3.write(m3);
+    motor4.write(m4);
   }
 }
 
