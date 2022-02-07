@@ -16,7 +16,7 @@ HardwareSerial mySerial(1);
 const int minValue {1000};     //min max values ESC
 const int maxValue {2000};
 
-const float axisSensitivity {1000}; //How much degrees/s should max stick be?
+const float axisSensitivity {10000}; //How much degrees/s should max stick be?
 
 //Create Servo object, used to send pwm signal
 Servo motor1;
@@ -38,14 +38,8 @@ void initializeServos() {
   //Enable motors
   motor1.attach(_motor1);
 
-<<<<<<< HEAD
-  motor1.writeMicroseconds(0);      //Make sure motors are not spinning
-=======
   motor1.writeMicroseconds(1000);      //Make sure motors are not spinning
-  motor2.writeMicroseconds(1000);
-  motor3.writeMicroseconds(1000);
-  motor4.writeMicroseconds(1000);
->>>>>>> 5d40f2b66fd1f48d29268aee67633c04c1db8475
+
 }
 ////////////////////////////SetData///////////////////////////////////
 
@@ -57,14 +51,8 @@ void getSbus() {
   }
   if (sbus_rx.failsafe()) {
     failsafe = true;
-<<<<<<< HEAD
     motor1.writeMicroseconds(0);      //Disable motors if receivers looses connection
-=======
-    motor1.writeMicroseconds(1000);      //Disable motors if receivers looses connection
-    motor2.writeMicroseconds(1000);
-    motor3.writeMicroseconds(1000);
-    motor4.writeMicroseconds(1000);
->>>>>>> 5d40f2b66fd1f48d29268aee67633c04c1db8475
+
   }
   else failsafe = false;
 
@@ -82,15 +70,8 @@ void getSbus() {
 //channel 7: failsafe    1000-2000
 
 void mapInput() {
-<<<<<<< HEAD
 
   throttle = map(sbus_data[2], 180, 1820, 780, 2000);
-=======
-  target_roll = map(sbus_data[0], 180, 1820, -axisSensitivity, axisSensitivity);
-  target_pitch = map(sbus_data[1], 180, 1820, -axisSensitivity, axisSensitivity);
-  target_yaw = map(sbus_data[3], 180, 1820, -axisSensitivity, axisSensitivity);
-  throttle = map(sbus_data[2], 180, 1820, 1000, 2000);
->>>>>>> 5d40f2b66fd1f48d29268aee67633c04c1db8475
 }
 
 ///////////////////////////////////////////////////////////////////////
