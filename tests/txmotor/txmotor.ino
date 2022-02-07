@@ -16,7 +16,7 @@ const int8_t rxpin {16};
 const int8_t txpin {17}; //We don't use this, set it to whatever.
 HardwareSerial mySerial(1);
 
-const int minValue {800};     //min max values ESC
+const int minValue {1000};     //min max values ESC
 const int maxValue {2000};
 
 const float axisSensitivity {100}; //How much degrees/s should max stick be?
@@ -61,10 +61,10 @@ void initializeServos() {
   motor3.attach(_motor3);
   motor4.attach(_motor4);
 
-  motor1.writeMicroseconds(0);      //Make sure motors are not spinning
-  motor2.writeMicroseconds(0);
-  motor3.writeMicroseconds(0);
-  motor4.writeMicroseconds(0);
+  motor1.writeMicroseconds(1000);      //Make sure motors are not spinning
+  motor2.writeMicroseconds(1000);
+  motor3.writeMicroseconds(1000);
+  motor4.writeMicroseconds(1000);
 }
 ////////////////////////////SetData///////////////////////////////////
 
@@ -72,17 +72,16 @@ void initializeServos() {
 void getSbus() {
   if (sbus_rx.Read()) {
     sbus_data = sbus_rx.ch();
-
   }
   if (sbus_rx.lost_frame()) {
     return;
   }
   if (sbus_rx.failsafe()) {
     failsafe = true;
-    motor1.writeMicroseconds(0);      //Disable motors if receivers looses connection
-    motor2.writeMicroseconds(0);
-    motor3.writeMicroseconds(0);
-    motor4.writeMicroseconds(0);
+    motor1.writeMicroseconds(1000);      //Disable motors if receivers looses connection
+    motor2.writeMicroseconds(1000);
+    motor3.writeMicroseconds(1000);
+    motor4.writeMicroseconds(1000);
   }
   else failsafe = false;
 
@@ -107,11 +106,10 @@ float mapFloat(float input, float in_min, float in_max, float out_min, float out
 //channel 7: failsafe    1000-2000
 
 void mapInput() {
-
   target_roll = map(sbus_data[0], 180, 1820, -axisSensitivity, axisSensitivity);
   target_pitch = map(sbus_data[1], 180, 1820, -axisSensitivity, axisSensitivity);
   target_yaw = map(sbus_data[3], 180, 1820, -axisSensitivity, axisSensitivity);
-  throttle = map(sbus_data[2], 180, 1820, 800, 1750);
+  throttle = map(sbus_data[2], 180, 1820, 1000, 2000);
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -122,16 +120,11 @@ void applyMotors() {
     return;
   }
   m1 = throttle;
-  constrain(m1, minValue, maxValue);
-  Serial.println(m1);
-
+  m1 = constrain(m1, minValue, maxValue);
   motor1.writeMicroseconds(m1);
 }
 
 void setup() {
-  pinMode(15, OUTPUT);
-  digitalWrite(15, LOW);
-
   int now = millis();
   
   Serial.begin(115200);

@@ -214,10 +214,10 @@ void applyMotors() {
     m3 = constrain(m3, minValue, maxValue);
     m4 = constrain(m4, minValue, maxValue);
 
-    m1 = map(m1, minValue, maxValue, 0, 180);
-    m2 = map(m2, minValue, maxValue, 0, 180);
-    m3 = map(m3, minValue, maxValue, 0, 180);
-    m4 = map(m4, minValue, maxValue, 0, 180);
+    map(m1, minValue, maxValue, 0, 180);
+    map(m2, minValue, maxValue, 0, 180);
+    map(m3, minValue, maxValue, 0, 180);
+    map(m4, minValue, maxValue, 0, 180);
 
 
   Serial.print("1: " + String(m1) + "\t" + "2: " + String(m2) + "\t" + "3: " + String(m3) + "\t" + "4: " + String(m4) + "\n");
