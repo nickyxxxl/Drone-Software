@@ -1,6 +1,6 @@
 #include <MPU6050_tockn.h>
 #include <Wire.h>
-#include <Servo.h>
+#include <ESP32Servo.h>
 #include <sbus.h>
 
 ///////////////////////////User defined/////////////////////////////////////
@@ -91,10 +91,12 @@ std::array<int16_t, bfs::SbusRx::NUM_CH()> sbus_data;
 
 void initializeServos() {
   //Enable motors     (pin, pwm channel, min angle, max angle, min pulse width, max pulse width)
-  motor1.attach(_motor1, Servo::CHANNEL_NOT_ATTACHED, 0, 180, minValue, maxValue);
-  motor2.attach(_motor2, Servo::CHANNEL_NOT_ATTACHED, 0, 180, minValue, maxValue);
-  motor3.attach(_motor3, Servo::CHANNEL_NOT_ATTACHED, 0, 180, minValue, maxValue);
-  motor4.attach(_motor4, Servo::CHANNEL_NOT_ATTACHED, 0, 180, minValue, maxValue);
+ 
+  
+  motor1.attach(_motor1, minValue, maxValue);
+  motor2.attach(_motor2, minValue, maxValue);
+  motor3.attach(_motor3, minValue, maxValue);
+  motor4.attach(_motor4, minValue, maxValue);
 
   motor1.writeMicroseconds(1000);      //Possible problem with initializing with 0, changed to 1000!
   motor2.writeMicroseconds(1000);
