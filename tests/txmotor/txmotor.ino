@@ -7,9 +7,6 @@
 
 //Define the pins for each motor
 #define _motor1 25
-#define _motor2 26
-#define _motor3 32
-#define _motor4 33
 
 //Define pin for sbus rx and tx channel (we only care about rx)
 const int8_t rxpin {16};
@@ -19,32 +16,15 @@ HardwareSerial mySerial(1);
 const int minValue {1000};     //min max values ESC
 const int maxValue {2000};
 
-const float axisSensitivity {100}; //How much degrees/s should max stick be?
+const float axisSensitivity {1000}; //How much degrees/s should max stick be?
 
 //Create Servo object, used to send pwm signal
-Servo motor1;                       //  4 ----- 2
-Servo motor2;                       //   |  ^  |
-Servo motor3;                       //   |     |
-Servo motor4;                       //  3 ----- 1
-
-//Operational variables
-bool failsafe = false;
-float deltaT;
-
-float currentTime;
-float lastTime;
-
-//Gyro data
-float gyro_roll, gyro_pitch, gyro_yaw;
-
-//Target values user input
-float target_roll, target_pitch, target_yaw, throttle;
+Servo motor1;
 
 float m1;
-float m2;
-float m3;
-float m4;
+float throttle;
 
+bool failsafe = false;
 
 /* SbusRx object on UART 1 */
 bfs::SbusRx sbus_rx(&mySerial);
@@ -57,41 +37,37 @@ std::array<int16_t, bfs::SbusRx::NUM_CH()> sbus_data;
 void initializeServos() {
   //Enable motors
   motor1.attach(_motor1);
-  motor2.attach(_motor2);
-  motor3.attach(_motor3);
-  motor4.attach(_motor4);
 
+<<<<<<< HEAD
+  motor1.writeMicroseconds(0);      //Make sure motors are not spinning
+=======
   motor1.writeMicroseconds(1000);      //Make sure motors are not spinning
   motor2.writeMicroseconds(1000);
   motor3.writeMicroseconds(1000);
   motor4.writeMicroseconds(1000);
+>>>>>>> 5d40f2b66fd1f48d29268aee67633c04c1db8475
 }
 ////////////////////////////SetData///////////////////////////////////
 
 //Store Sbus data in array sbus_rx
 void getSbus() {
   if (sbus_rx.Read()) {
+    if (sbus_rx.lost_frame())return;
     sbus_data = sbus_rx.ch();
-  }
-  if (sbus_rx.lost_frame()) {
-    return;
   }
   if (sbus_rx.failsafe()) {
     failsafe = true;
+<<<<<<< HEAD
+    motor1.writeMicroseconds(0);      //Disable motors if receivers looses connection
+=======
     motor1.writeMicroseconds(1000);      //Disable motors if receivers looses connection
     motor2.writeMicroseconds(1000);
     motor3.writeMicroseconds(1000);
     motor4.writeMicroseconds(1000);
+>>>>>>> 5d40f2b66fd1f48d29268aee67633c04c1db8475
   }
   else failsafe = false;
 
-}
-
-///////////////////////////////////////////////////////////////////////
-
-//function to map a float from range (in_min, in_out) to (out_min, out_max)
-float mapFloat(float input, float in_min, float in_max, float out_min, float out_max) {
-  return (input - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
 ////////////////////////////Data processing////////////////////////////
@@ -106,10 +82,15 @@ float mapFloat(float input, float in_min, float in_max, float out_min, float out
 //channel 7: failsafe    1000-2000
 
 void mapInput() {
+<<<<<<< HEAD
+
+  throttle = map(sbus_data[2], 180, 1820, 780, 2000);
+=======
   target_roll = map(sbus_data[0], 180, 1820, -axisSensitivity, axisSensitivity);
   target_pitch = map(sbus_data[1], 180, 1820, -axisSensitivity, axisSensitivity);
   target_yaw = map(sbus_data[3], 180, 1820, -axisSensitivity, axisSensitivity);
   throttle = map(sbus_data[2], 180, 1820, 1000, 2000);
+>>>>>>> 5d40f2b66fd1f48d29268aee67633c04c1db8475
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -126,17 +107,17 @@ void applyMotors() {
 
 void setup() {
   int now = millis();
-  
+
   Serial.begin(115200);
   Serial.println("tekst in" + String(now));
-  
+
   Serial.println("Starting sbus connection.");
   sbus_rx.Begin(rxpin, txpin);    //Begin Sbus communication
-  
+
   Serial.println("Initializing servos");
   initializeServos();             //Start connection to motors
   Serial.println("Finished initializing servos");
-  
+
   Serial.println("Finished setup in: " + String(millis() - now) + " ms");
 
 }
@@ -146,9 +127,9 @@ void loop() {
   //////Get system data//////
   getSbus();
   mapInput();
-  
+
   if (failsafe)return;  //Disable everything if signal is lost or arm button is off.
-    
+
   //////Apply to motors//////
   applyMotors();
   delay(10);
