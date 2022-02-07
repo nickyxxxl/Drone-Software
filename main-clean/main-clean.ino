@@ -1,8 +1,7 @@
 #include <MPU6050_tockn.h>
 #include <Wire.h>
-#include <ESP32Servo.h>
+#include <Servo.h>
 #include <sbus.h>
-#include <Tone32.h>
 
 ///////////////////////////User defined/////////////////////////////////////
 
@@ -97,10 +96,10 @@ void initializeServos() {
   motor3.attach(_motor3);
   motor4.attach(_motor4);
 
-  motor1.writeMicroseconds(0);      //Make sure motors are not spinning
-  motor2.writeMicroseconds(0);
-  motor3.writeMicroseconds(0);
-  motor4.writeMicroseconds(0);
+  motor1.writeMicroseconds(1000);      //Possible problem with initializing with 0, changed to 1000!
+  motor2.writeMicroseconds(1000);
+  motor3.writeMicroseconds(1000);
+  motor4.writeMicroseconds(1000);
 }
 ///////////////////////////////////////////////////////////////////////
 
@@ -108,6 +107,7 @@ void initializeServos() {
 
 //Store Sbus data in array sbus_rx
 void getSbus() {
+  
   if (sbus_rx.Read()) {
     if (sbus_rx.lost_frame())return;
     sbus_data = sbus_rx.ch();
@@ -201,7 +201,7 @@ void applyMotors() {
     m2 = throttle - target_roll + target_pitch + target_yaw;
     m3 = throttle + target_roll - target_pitch + target_yaw;
     m4 = throttle + target_roll + target_pitch - target_yaw;
-  } else if (sbus_data[5] < 1800) {       //PID mode
+  } else{                                                        //PID mode
     m1 = throttle - PID_output_roll - PID_output_pitch - PID_output_yaw;
     m2 = throttle - PID_output_roll + PID_output_pitch + PID_output_yaw;
     m3 = throttle + PID_output_roll - PID_output_pitch + PID_output_yaw;
@@ -215,7 +215,7 @@ void applyMotors() {
 
   Serial.print("1: " + String(m1) + "\t" + "2: " + String(m2) + "\t" + "3: " + String(m3) + "\t" + "4: " + String(m4) + "\n");
   
-  if (sbus_data[4] < 1200 || sbus_rx.failsafe()) {                                       //arm
+  if (sbus_data[4] < 1200 || sbus_rx.failsafe()) {      //unarmed or failsave
     motor1.writeMicroseconds(0);
     motor2.writeMicroseconds(0);
     motor3.writeMicroseconds(0);
@@ -229,8 +229,8 @@ void applyMotors() {
 }
 
 void setup() {
-  Serial.begin(115200);
   delay(1000);
+  Serial.begin(115200);
   
   sbus_rx.Begin(rxpin, txpin);    //Begin Sbus communication
 
