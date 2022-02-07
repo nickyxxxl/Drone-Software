@@ -90,11 +90,11 @@ std::array<int16_t, bfs::SbusRx::NUM_CH()> sbus_data;
 ///////////////////////////SETUP/////////////////////////////////////
 
 void initializeServos() {
-  //Enable motors
-  motor1.attach(_motor1);
-  motor2.attach(_motor2);
-  motor3.attach(_motor3);
-  motor4.attach(_motor4);
+  //Enable motors     (pin, pwm channel, min angle, max angle, min pulse width, max pulse width)
+  motor1.attach(_motor1, Servo::CHANNEL_NOT_ATTACHED, 0, 180, minValue, maxValue);
+  motor2.attach(_motor2, Servo::CHANNEL_NOT_ATTACHED, 0, 180, minValue, maxValue);
+  motor3.attach(_motor3, Servo::CHANNEL_NOT_ATTACHED, 0, 180, minValue, maxValue);
+  motor4.attach(_motor4, Servo::CHANNEL_NOT_ATTACHED, 0, 180, minValue, maxValue);
 
   motor1.writeMicroseconds(1000);      //Possible problem with initializing with 0, changed to 1000!
   motor2.writeMicroseconds(1000);
@@ -208,10 +208,10 @@ void applyMotors() {
     m4 = throttle + PID_output_roll + PID_output_pitch - PID_output_yaw;
   }
   
-  m1 = constrain(m1, minValue, maxValue);  //constrain between min and max esc value
-  m2 = constrain(m2, minValue, maxValue);
-  m3 = constrain(m3, minValue, maxValue);
-  m4 = constrain(m4, minValue, maxValue);
+//  m1 = constrain(m1, minValue, maxValue);  //constrain between min and max esc value
+//  m2 = constrain(m2, minValue, maxValue);  //Replaced by servo library
+//  m3 = constrain(m3, minValue, maxValue);
+//  m4 = constrain(m4, minValue, maxValue);
 
   Serial.print("1: " + String(m1) + "\t" + "2: " + String(m2) + "\t" + "3: " + String(m3) + "\t" + "4: " + String(m4) + "\n");
   
