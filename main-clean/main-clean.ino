@@ -73,10 +73,10 @@ float previous_i_yaw {},
       previous_error_yaw {},
       PID_output_yaw     {};
 
-float m1;
-float m2;
-float m3;
-float m4;
+int16_t m1;
+int16_t m2;
+int16_t m3;
+int16_t m4;
 
 
 /* SbusRx object on UART 1 */
@@ -101,32 +101,6 @@ void initializeServos(){
   motor4.attach(_motor4, 1000, 2000);
 }
 
-////////////////////////////SetData///////////////////////////////////
-
-//Store Sbus data in array sbus_rx
-void getSbus() {
-  
-  if (sbus_rx.Read()) {
-    if (sbus_rx.lost_frame())return;
-    sbus_data = sbus_rx.ch();
-  }
-}
-
-
-void getGyro() {
-  mpu6050.update();
-  gyro_roll = mpu6050.getGyroY();
-  gyro_pitch = mpu6050.getGyroZ();
-  gyro_yaw = mpu6050.getGyroX();
-}
-
-///////////////////////////////////////////////////////////////////////
-
-//function to map a float from range (in_min, in_out) to (out_min, out_max)
-float mapFloat(float input, float in_min, float in_max, float out_min, float out_max) {
-  return (input - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
-
 ////////////////////////////Data processing////////////////////////////
 
 //////Channel layout//////range/////////desired/////
@@ -138,13 +112,55 @@ float mapFloat(float input, float in_min, float in_max, float out_min, float out
 //channel 6: mode        1000-2000    
 //channel 7: failsafe    1000-2000
 
+///////////////////////////////////////////////////////////////////////
+
+void applyMotors() {
+    
+  if (sbus_data[5] < 900){                                        //direct mode
+    m1 = throttle - target_roll - target_pitch - target_yaw;
+    m2 = throttle - target_roll + target_pitch + target_yaw;
+    m3 = throttle + target_roll - target_pitch + target_yaw;
+    m4 = throttle + target_roll + target_pitch - target_yaw;
+  } else{                                                        //PID mode
+    m1 = throttle - PID_output_roll - PID_output_pitch - PID_output_yaw;
+    m2 = throttle - PID_output_roll + PID_output_pitch + PID_output_yaw;
+    m3 = throttle + PID_output_roll - PID_output_pitch + PID_output_yaw;
+    m4 = throttle + PID_output_roll + PID_output_pitch - PID_output_yaw;
+  }
+  
+    m1 = constrain(m1, minValue, maxValue);  //constrain between min and max esc value
+    m2 = constrain(m2, minValue, maxValue);
+    m3 = constrain(m3, minValue, maxValue);
+    m4 = constrain(m4, minValue, maxValue);
+
+  Serial.print("1: " + String(m1) + "\t" + "2: " + String(m2) + "\t" + "3: " + String(m3) + "\t" + "4: " + String(m4) + "\n");
+  
+  if (sbus_data[4] < 1200 || sbus_rx.failsafe()) {      //unarmed or failsave
+    analogWrite(_motor1, 1000);
+    motor1.write(1000);
+    analogWrite(_motor2, 1000);
+    motor2.write(1000);
+    analogWrite(_motor3, 1000);
+    motor3.write(1000);
+    analogWrite(_motor4, 1000);
+    motor4.write(1000);
+  } else {
+    analogWrite(_motor1, m1);
+    motor1.write(m1);
+    analogWrite(_motor2, m2);
+    motor1.write(m2);
+    analogWrite(_motor3, m3);
+    motor1.write(m3);
+    analogWrite(_motor4, m4);
+    motor1.write(m4);
+  }
+}
 void mapInput() {
   target_roll = map(sbus_data[0], 180, 1820, -axisSensitivity, axisSensitivity);
   target_pitch = map(sbus_data[1], 180, 1820, -axisSensitivity, axisSensitivity);
   target_yaw = map(sbus_data[3], 180, 1820, -axisSensitivity, axisSensitivity);
   throttle = map(sbus_data[2], 180, 1820, minValue, maxValue);
 }
-
 
 //PID for each axis
 void calculatePID_Roll() {
@@ -189,50 +205,6 @@ void calculatePID_Yaw() {
   previous_i_yaw = iTerm;
 }
 
-///////////////////////////////////////////////////////////////////////
-
-
-void applyMotors() {
-    
-  if (sbus_data[5] < 900){                                        //direct mode
-    m1 = throttle - target_roll - target_pitch - target_yaw;
-    m2 = throttle - target_roll + target_pitch + target_yaw;
-    m3 = throttle + target_roll - target_pitch + target_yaw;
-    m4 = throttle + target_roll + target_pitch - target_yaw;
-  } else{                                                        //PID mode
-    m1 = throttle - PID_output_roll - PID_output_pitch - PID_output_yaw;
-    m2 = throttle - PID_output_roll + PID_output_pitch + PID_output_yaw;
-    m3 = throttle + PID_output_roll - PID_output_pitch + PID_output_yaw;
-    m4 = throttle + PID_output_roll + PID_output_pitch - PID_output_yaw;
-  }
-  
-    m1 = constrain(m1, minValue, maxValue);  //constrain between min and max esc value
-    m2 = constrain(m2, minValue, maxValue);
-    m3 = constrain(m3, minValue, maxValue);
-    m4 = constrain(m4, minValue, maxValue);
-
-  Serial.print("1: " + String(m1) + "\t" + "2: " + String(m2) + "\t" + "3: " + String(m3) + "\t" + "4: " + String(m4) + "\n");
-  
-  if (sbus_data[4] < 1200 || sbus_rx.failsafe()) {      //unarmed or failsave
-    analogWrite(_motor1, 1000);
-    motor1.write(1000);
-    analogWrite(_motor2, 1000);
-    motor2.write(1000);
-    analogWrite(_motor3, 1000);
-    motor3.write(1000);
-    analogWrite(_motor4, 1000);
-    motor4.write(1000);
-  } else {
-    analogWrite(_motor1, m1);
-    motor1.write(m1);
-    analogWrite(_motor2, m2);
-    motor1.write(m2);
-    analogWrite(_motor3, m3);
-    motor1.write(m3);
-    analogWrite(_motor4, m4);
-    motor1.write(m4);
-  }
-}
 
 void setup() {
   delay(1000);
@@ -270,4 +242,22 @@ void loop() {
   }
   //////Apply to motors//////
   applyMotors();
+}
+
+////////////////////////////SetData///////////////////////////////////
+
+//Store Sbus data in array sbus_rx
+void getSbus() {
+  if (sbus_rx.Read()) {
+    if (sbus_rx.lost_frame())return;
+    sbus_data = sbus_rx.ch();
+  }
+}
+
+
+void getGyro() {
+  mpu6050.update();
+  gyro_roll = mpu6050.getGyroY();
+  gyro_pitch = mpu6050.getGyroZ();
+  gyro_yaw = mpu6050.getGyroX();
 }
