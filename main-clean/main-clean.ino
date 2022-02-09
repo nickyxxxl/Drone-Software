@@ -5,6 +5,11 @@
 
 ///////////////////////////User defined/////////////////////////////////////
 
+Servo motor1;
+Servo motor2;
+Servo motor3;
+Servo motor4;
+
 //Define the pins for each motor
 #define _motor1 25
 #define _motor2 26
@@ -16,7 +21,7 @@ const int8_t rxpin {16};
 const int8_t txpin {17}; //We don't use this, set it to whatever.
 HardwareSerial mySerial(1);
 
-const int minValue {780};     //min max values ESC
+const int minValue {1000};     //min max values ESC
 const int maxValue {2000};
 
 //PID tuning
@@ -40,13 +45,6 @@ const float axisSensitivity {1000}; //How much degrees/s should max stick be?
 //////////////////////////////////////////////////////////////////////////
 
 MPU6050 mpu6050(Wire);
-//Adafruit_INA219 ina219;
-
-//Create Servo object, used to send pwm signal
-Servo motor1;                       //  4 ----- 2
-Servo motor2;                       //   |  ^  |
-Servo motor3;                       //   |     |
-Servo motor4;                       //  3 ----- 1
 
 //Operational variables
 bool failsafe = false;
@@ -87,22 +85,21 @@ bfs::SbusRx sbus_rx(&mySerial);
 std::array<int16_t, bfs::SbusRx::NUM_CH()> sbus_data;
 
 
-///////////////////////////SETUP/////////////////////////////////////
 
-void initializeServos() {
-  //Enable motors
- 
-  motor1.attach(_motor1);
-  motor2.attach(_motor2);
-  motor3.attach(_motor3);
-  motor4.attach(_motor4);
-
-//  motor1.writeMicroseconds(1000);      //Possible problem with initializing with 0, changed to 1000!
-//  motor2.writeMicroseconds(1000);
-//  motor3.writeMicroseconds(1000);
-//  motor4.writeMicroseconds(1000);
+void initializeServos(){
+  ESP32PWM::allocateTimer(0);
+  ESP32PWM::allocateTimer(1);
+  ESP32PWM::allocateTimer(2);
+  ESP32PWM::allocateTimer(3);
+  motor1.setPeriodHertz(50);
+  motor2.setPeriodHertz(50);
+  motor3.setPeriodHertz(50);
+  motor4.setPeriodHertz(50);
+  motor1.attach(_motor1, 1000, 2000);
+  motor2.attach(_motor2, 1000, 2000);
+  motor3.attach(_motor3, 1000, 2000);
+  motor4.attach(_motor4, 1000, 2000);
 }
-///////////////////////////////////////////////////////////////////////
 
 ////////////////////////////SetData///////////////////////////////////
 
@@ -145,7 +142,7 @@ void mapInput() {
   target_roll = map(sbus_data[0], 180, 1820, -axisSensitivity, axisSensitivity);
   target_pitch = map(sbus_data[1], 180, 1820, -axisSensitivity, axisSensitivity);
   target_yaw = map(sbus_data[3], 180, 1820, -axisSensitivity, axisSensitivity);
-  throttle = map(sbus_data[2], 180, 1820, 780, 2000);
+  throttle = map(sbus_data[2], 180, 1820, minValue, maxValue);
 }
 
 
@@ -214,28 +211,26 @@ void applyMotors() {
     m3 = constrain(m3, minValue, maxValue);
     m4 = constrain(m4, minValue, maxValue);
 
-    map(m1, minValue, maxValue, 0, 180);
-    map(m2, minValue, maxValue, 0, 180);
-    map(m3, minValue, maxValue, 0, 180);
-    map(m4, minValue, maxValue, 0, 180);
-
-
   Serial.print("1: " + String(m1) + "\t" + "2: " + String(m2) + "\t" + "3: " + String(m3) + "\t" + "4: " + String(m4) + "\n");
   
   if (sbus_data[4] < 1200 || sbus_rx.failsafe()) {      //unarmed or failsave
-    motor1.writeMicroseconds(0);
-    motor2.writeMicroseconds(0);
-    motor3.writeMicroseconds(0);
-    motor4.writeMicroseconds(0);
+    analogWrite(_motor1, 1000);
+    motor1.write(1000);
+    analogWrite(_motor2, 1000);
+    motor2.write(1000);
+    analogWrite(_motor3, 1000);
+    motor3.write(1000);
+    analogWrite(_motor4, 1000);
+    motor4.write(1000);
   } else {
-//    motor1.writeMicroseconds(m1);
-//    motor2.writeMicroseconds(m2);
-//    motor3.writeMicroseconds(m3);
-//    motor4.writeMicroseconds(m4);
+    analogWrite(_motor1, m1);
     motor1.write(m1);
-    motor2.write(m2);
-    motor3.write(m3);
-    motor4.write(m4);
+    analogWrite(_motor2, m2);
+    motor1.write(m2);
+    analogWrite(_motor3, m3);
+    motor1.write(m3);
+    analogWrite(_motor4, m4);
+    motor1.write(m4);
   }
 }
 
@@ -249,7 +244,8 @@ void setup() {
   mpu6050.begin();                //Start gyro communication
   
   mpu6050.setGyroOffsets(-17.10, 2.69, 0.63);  //true if you want debug output, blank if not !!Do not move during this period!!
-  initializeServos();             //Start connection to motors
+
+  initializeServos();
 }
 
 void loop() {
@@ -274,5 +270,4 @@ void loop() {
   }
   //////Apply to motors//////
   applyMotors();
-  delay(12);
 }
