@@ -1,14 +1,8 @@
 #include <MPU6050_tockn.h>
 #include <Wire.h>
-#include <ESP32Servo.h>
 #include <sbus.h>
 
 ///////////////////////////User defined/////////////////////////////////////
-
-Servo motor1;
-Servo motor2;
-Servo motor3;
-Servo motor4;
 
 //Define the pins for each motor
 #define _motor1 25
@@ -21,8 +15,8 @@ const int8_t rxpin {16};
 const int8_t txpin {17}; //We don't use this, set it to whatever.
 HardwareSerial mySerial(1);
 
-const int minValue {1000};     //min max values ESC
-const int maxValue {2000};
+const int minValue {400};     //min max values ESC
+const int maxValue {1000};
 
 //PID tuning
 const float kp_roll {1.3},
@@ -87,18 +81,15 @@ std::array<int16_t, bfs::SbusRx::NUM_CH()> sbus_data;
 
 
 void initializeServos(){
-  ESP32PWM::allocateTimer(0);
-  ESP32PWM::allocateTimer(1);
-  ESP32PWM::allocateTimer(2);
-  ESP32PWM::allocateTimer(3);
-  motor1.setPeriodHertz(50);
-  motor2.setPeriodHertz(50);
-  motor3.setPeriodHertz(50);
-  motor4.setPeriodHertz(50);
-  motor1.attach(_motor1, 1000, 2000);
-  motor2.attach(_motor2, 1000, 2000);
-  motor3.attach(_motor3, 1000, 2000);
-  motor4.attach(_motor4, 1000, 2000);
+  delay(4000);
+  ledcSetup(1,1000,10); //(channel, frequency, resolution)
+  ledcSetup(2,1000,10);
+  ledcSetup(3,1000,10);
+  ledcSetup(4,1000,10);
+  ledcAttachPin(_motor1, 1); //(pin, channel)
+  ledcAttachPin(_motor2, 2);
+  ledcAttachPin(_motor3, 3);
+  ledcAttachPin(_motor4, 4);
 }
 
 ////////////////////////////Data processing////////////////////////////
@@ -136,23 +127,15 @@ void applyMotors() {
   Serial.print("1: " + String(m1) + "\t" + "2: " + String(m2) + "\t" + "3: " + String(m3) + "\t" + "4: " + String(m4) + "\n");
   
   if (sbus_data[4] < 1200 || sbus_rx.failsafe()) {      //unarmed or failsave
-    analogWrite(_motor1, 1000);
-    motor1.write(1000);
-    analogWrite(_motor2, 1000);
-    motor2.write(1000);
-    analogWrite(_motor3, 1000);
-    motor3.write(1000);
-    analogWrite(_motor4, 1000);
-    motor4.write(1000);
+    ledcWrite(1,400);
+    ledcWrite(2,400);
+    ledcWrite(3,400);
+    ledcWrite(4,400);
   } else {
-    analogWrite(_motor1, m1);
-    motor1.write(m1);
-    analogWrite(_motor2, m2);
-    motor1.write(m2);
-    analogWrite(_motor3, m3);
-    motor1.write(m3);
-    analogWrite(_motor4, m4);
-    motor1.write(m4);
+    ledcWrite(1,m1);
+    ledcWrite(2,m1);
+    ledcWrite(3,m1);
+    ledcWrite(4,m1);
   }
 }
 void mapInput() {
