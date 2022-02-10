@@ -71,7 +71,7 @@ void loop() {
 
   //////Get system data//////
   getSbus();
-  throttle = map(sbus_data[2], 180, 1820, 0, 1023);
+  throttle = map(sbus_data[2], 180, 1820, 400, 1023);
     
   //////Apply to motors//////
   applyMotors();
