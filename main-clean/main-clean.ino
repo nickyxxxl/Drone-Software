@@ -15,7 +15,7 @@ const int8_t rxpin {16};
 const int8_t txpin {17}; //We don't use this, set it to whatever.
 HardwareSerial mySerial(1);
 
-const int minValue {400};     //min max values ESC
+const int minValue {430};     //400 is the minimum, but we want a little higher for motors spinning while idle
 const int maxValue {1000};
 
 //PID tuning
@@ -139,6 +139,7 @@ void applyMotors() {
     ledcWrite(4,m4);
   }
 }
+
 void mapInput() {
   target_roll = map(sbus_data[0], 180, 1820, -axisSensitivity, axisSensitivity);
   target_pitch = map(sbus_data[1], 180, 1820, -axisSensitivity, axisSensitivity);
@@ -149,7 +150,7 @@ void mapInput() {
 //PID for each axis
 void calculatePID_Roll() {
 
-  float error {gyro_roll - target_roll};
+  float error {gyro_roll + target_roll};
 
   float pTerm {error};
   //float iTerm {previous_i_roll + error * deltaT};
@@ -163,7 +164,7 @@ void calculatePID_Roll() {
 
 void calculatePID_Pitch() {
 
-  float error {gyro_pitch - target_pitch};
+  float error {gyro_pitch + target_pitch};
 
   float pTerm {error};
   //float iTerm {previous_i_pitch + error * deltaT};
@@ -177,7 +178,7 @@ void calculatePID_Pitch() {
 
 void calculatePID_Yaw() {
 
-  float error {gyro_yaw - target_yaw};
+  float error {gyro_yaw + target_yaw};
 
   float pTerm {error};
   //float iTerm {previous_i_yaw + error * deltaT};
