@@ -19,22 +19,22 @@ const int minValue {400};     //min max values ESC
 const int maxValue {1000};
 
 //PID tuning
-const float kp_roll {1.3},
+const float kp_roll {0.7},
       ki_roll {0.04},
       kd_roll {18.0};
 const int max_roll = 400;
 
-const float kp_pitch {1.3},
+const float kp_pitch {0.7},
       ki_pitch {0.04},
       kd_pitch {18.0};
 const int max_pitch = 400;
 
-const float kp_yaw {4.0},
+const float kp_yaw {2.0},
       ki_yaw {0.02},
       kd_yaw {0.0};
 const int max_yaw = 400;
 
-const float axisSensitivity {1000}; //How much degrees/s should max stick be?
+const float axisSensitivity {300}; //How much degrees/s should max stick be?
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -126,11 +126,12 @@ void applyMotors() {
 
   Serial.print("1: " + String(m1) + "\t" + "2: " + String(m2) + "\t" + "3: " + String(m3) + "\t" + "4: " + String(m4) + "\n");
   
-  if (sbus_data[4] < 1200 || sbus_rx.failsafe()) {      //unarmed or failsave
+  if (sbus_data[4] < 400 || sbus_rx.failsafe()) {      //unarmed or failsave
     ledcWrite(1,400);
     ledcWrite(2,400);
     ledcWrite(3,400);
     ledcWrite(4,400);
+    Serial.print("armed or failsafe");
   } else {
     ledcWrite(1,m1);
     ledcWrite(2,m1);
@@ -148,44 +149,44 @@ void mapInput() {
 //PID for each axis
 void calculatePID_Roll() {
 
-  float error {target_roll - gyro_roll};
+  float error {gyro_roll - target_roll};
 
   float pTerm {error};
-  float iTerm {previous_i_roll + error * deltaT};
-  float dTerm {(previous_error_roll - error) / deltaT};
+  //float iTerm {previous_i_roll + error * deltaT};
+  //float dTerm {(previous_error_roll - error) / deltaT};
 
-  PID_output_roll = (pTerm * kp_roll) + (iTerm * ki_roll) + (dTerm * kd_roll);
+  PID_output_roll = (pTerm * kp_roll);// + (iTerm * ki_roll) + (dTerm * kd_roll);
 
-  previous_error_roll = error;
-  previous_i_roll = iTerm;
+  //previous_error_roll = error;
+  //previous_i_roll = iTerm;
 }
 
 void calculatePID_Pitch() {
 
-  float error {target_pitch - gyro_pitch};
+  float error {gyro_pitch - target_pitch};
 
   float pTerm {error};
-  float iTerm {previous_i_pitch + error * deltaT};
-  float dTerm {(previous_error_pitch - error) / deltaT};
+  //float iTerm {previous_i_pitch + error * deltaT};
+  //float dTerm {(previous_error_pitch - error) / deltaT};
 
-  PID_output_pitch = (pTerm * kp_pitch) + (iTerm * ki_pitch) + (dTerm * kd_pitch);
+  PID_output_pitch = (pTerm * kp_pitch);// + (iTerm * ki_pitch) + (dTerm * kd_pitch);
 
-  previous_error_pitch = error;
-  previous_i_pitch = iTerm;
+  //previous_error_pitch = error;
+  //previous_i_pitch = iTerm;
 }
 
 void calculatePID_Yaw() {
 
-  float error {target_yaw - gyro_yaw};
+  float error {gyro_yaw - target_yaw};
 
   float pTerm {error};
-  float iTerm {previous_i_yaw + error * deltaT};
-  float dTerm {(previous_error_yaw - error) / deltaT};
+  //float iTerm {previous_i_yaw + error * deltaT};
+  //float dTerm {(previous_error_yaw - error) / deltaT};
 
-  PID_output_yaw = (pTerm * kp_yaw) + (iTerm * ki_yaw) + (dTerm * kd_yaw);
+  PID_output_yaw = (pTerm * kp_yaw);// + (iTerm * ki_yaw) + (dTerm * kd_yaw);
 
-  previous_error_yaw = error;
-  previous_i_yaw = iTerm;
+  //previous_error_yaw = error;
+  //previous_i_yaw = iTerm;
 }
 
 
@@ -206,7 +207,8 @@ void setup() {
 void loop() {
   //////Get system data//////
   getSbus();
-  if (sbus_rx.lost_frame()) {                                      //ignore control if frame lost
+  
+  if (sbus_rx.lost_frame() && !sbus_rx.failsafe()) {                                      //ignore control if frame lost
     Serial.println("frame lost!");
     delay(3);
     return;
@@ -225,6 +227,7 @@ void loop() {
   }
   //////Apply to motors//////
   applyMotors();
+  delay(3);
 }
 
 ////////////////////////////SetData///////////////////////////////////
