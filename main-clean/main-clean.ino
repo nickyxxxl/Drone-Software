@@ -134,9 +134,9 @@ void applyMotors() {
     Serial.print("armed or failsafe");
   } else {
     ledcWrite(1,m1);
-    ledcWrite(2,m1);
-    ledcWrite(3,m1);
-    ledcWrite(4,m1);
+    ledcWrite(2,m2);
+    ledcWrite(3,m3);
+    ledcWrite(4,m4);
   }
 }
 void mapInput() {
@@ -199,7 +199,8 @@ void setup() {
   Wire.begin();
   mpu6050.begin();                //Start gyro communication
   
-  mpu6050.setGyroOffsets(-17.10, 2.69, 0.63);  //true if you want debug output, blank if not !!Do not move during this period!!
+  //mpu6050.setGyroOffsets(-17.10, 2.69, 0.63);
+  mpu6050.calcGyroOffsets();
 
   initializeServos();
 }
