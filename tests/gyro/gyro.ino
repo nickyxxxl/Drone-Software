@@ -38,5 +38,5 @@ void loop() {
   Serial.print("pitch:" + String(gyro_pitch) + "  ");
   Serial.print("yaw:" + String(gyro_yaw) + "\n");
   Serial.print("\n");
-  delay(150);
+  delay(12);
 }
